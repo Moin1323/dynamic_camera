@@ -1,10 +1,21 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
-import 'package:external_path/external_path.dart';
 import 'package:flutter/material.dart';
+import 'package:sensors_plus/sensors_plus.dart';
+import 'dart:async';
+
+import '../widgets/align_image_overlay.dart';
+import '../widgets/alignment_status.dart';
+import '../widgets/axis_values.dart';
+import '../widgets/camera_preview.dart';
+import '../widgets/capture_button.dart';
+import '../widgets/cature_image_dailog.dart';
+import '../widgets/close_button.dart';
+import '../widgets/flash_light_dailog.dart';
 
 class ProcessImage extends StatefulWidget {
   final List<CameraDescription> cameras;
+
   const ProcessImage({super.key, required this.cameras});
 
   @override
@@ -12,175 +23,104 @@ class ProcessImage extends StatefulWidget {
 }
 
 class _ProcessImageState extends State<ProcessImage> {
-  late CameraController cameraController;
-  late Future<void> cameraValue;
-  bool isFlashOn = false;
-
-  Future<File> saveImage(XFile image) async {
-    final downloadPath = await ExternalPath.getExternalStoragePublicDirectory(
-        ExternalPath.DIRECTORY_DOWNLOADS);
-    final fileName = "${DateTime.now().millisecondsSinceEpoch}.png";
-    final file = File('$downloadPath/$fileName');
-
-    try {
-      await file.writeAsBytes(await image.readAsBytes());
-    } catch (_) {}
-    return file;
-  }
-
-  void takePicture() async {
-    XFile? image;
-    if (cameraController.value.isTakingPicture ||
-        !cameraController.value.isInitialized) {
-      return;
-    }
-    image = await cameraController.takePicture();
-    if (cameraController.value.flashMode == FlashMode.torch) {
-      setState(() {
-        cameraController.setFlashMode(FlashMode.off);
-      });
-    }
-
-    final file = await saveImage(image);
-
-    setState(() {});
-  }
-
-  void startCamera(int camera) {
-    cameraController = CameraController(
-      widget.cameras[camera],
-      ResolutionPreset.high,
-      enableAudio: false,
-    );
-    cameraValue = cameraController.initialize();
-  }
+  late CameraController _cameraController;
+  late Future<void> _cameraValue;
+  double _x = 0.0, _y = 0.0, _z = 0.0;
+  bool _isAligned = false;
+  StreamSubscription? _sensorSubscription;
 
   @override
   void initState() {
-    startCamera(0);
     super.initState();
+    if (widget.cameras.isNotEmpty) {
+      _initializeCamera(0);
+    }
+    _subscribeToAccelerometer();
+  }
+
+  void _subscribeToAccelerometer() {
+    _sensorSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
+      setState(() {
+        _x = event.x;
+        _y = event.y;
+        _z = event.z;
+        _isAligned = (_x.abs() < 0.7) && (_y.abs() < 0.7) && ((_z - 9.8).abs() < 0.7);
+      });
+    });
+  }
+
+  void _initializeCamera(int cameraIndex) {
+    if (widget.cameras.isEmpty) return;
+    _cameraController = CameraController(
+      widget.cameras[cameraIndex],
+      ResolutionPreset.high,
+      enableAudio: false,
+    );
+    _cameraValue = _cameraController.initialize().then((_) {
+      _cameraController.setFlashMode(FlashMode.off);
+      if (mounted) _showFlashlightDialog();
+    }).catchError((e) {
+      debugPrint("Error initializing camera: $e");
+    });
+  }
+
+  @override
+  void dispose() {
+    _sensorSubscription?.cancel();
+    _cameraController.dispose();
+    super.dispose();
+  }
+
+  void _showFlashlightDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return FlashlightDialog(cameraController: _cameraController);
+      },
+    );
+  }
+
+  void _takePicture() async {
+    if (_cameraController.value.isTakingPicture || !_cameraController.value.isInitialized) return;
+    XFile image = await _cameraController.takePicture();
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return CapturedImageDialog(imagePath: image.path);
+        },
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
+    final appWidth = MediaQuery.sizeOf(context).width;
+    final appHeight = MediaQuery.sizeOf(context).height * 0.85;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            FutureBuilder(
-              future: cameraValue,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  return SizedBox(
-                    width: size.width,
-                    height: size.height,
-                    child: FittedBox(
-                      fit: BoxFit.cover,
-                      child: SizedBox(
-                        width: 100,
-                        child: CameraPreview(cameraController),
-                      ),
-                    ),
-                  );
-                } else {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-              },
-            ),
-            Align(
-              alignment: Alignment.topRight,
-              child: IconButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                icon: const Icon(
-                  Icons.close,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.center,
-              child: Column(
-                children: [
-                  Transform.scale(
-                    scale: 1,
-                    child: Padding(
-                      padding: EdgeInsets.only(top: size.height / 19.6),
-                      child: Image.asset("lib/assets/hand.png"),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                height: size.height / 15,
-                width: size.width,
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.4),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(size.height / 65),
-                      child: const Text(
-                        "Use flashlight for better results",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () async {
-                        // First, handle the flash mode logic
-                        setState(() {
-                          isFlashOn = !isFlashOn;
-                        });
-
-                        // Then, apply the changes based on the new value of `isFlashOn`
-                        if (isFlashOn) {
-                          await cameraController.setFlashMode(FlashMode.torch);
-                        } else {
-                          await cameraController.setFlashMode(FlashMode.off);
-                        }
-                      },
-                      icon: Icon(
-                        isFlashOn
-                            ? Icons.flashlight_on_outlined
-                            : Icons.flashlight_off_outlined,
-                        color: isFlashOn
-                            ? Theme.of(context)
-                                .colorScheme
-                                .inversePrimary
-                                .withOpacity(1)
-                            : Theme.of(context)
-                                .colorScheme
-                                .inversePrimary
-                                .withOpacity(0.4),
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.close,
-                size: size.height / 7,
-                color: Colors.black.withOpacity(0.2),
-              ),
-            ),
-          ],
+    return Center(
+      child: SizedBox(
+        width: appWidth,
+        height: appHeight,
+        child: Scaffold(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          body: Stack(
+            children: [
+              CameraPreviewWidget(cameraValue: _cameraValue, cameraController: _cameraController),
+              const Positioned.fill(child: AlignImageOverlay()),
+              AxisValuesWidget(x: _x, y: _y, z: _z),
+              AlignmentStatusWidget(isAligned: _isAligned),
+              CaptureButtonWidget(isAligned: _isAligned, onPressed: _takePicture),
+              CloseButtonWidget(onPressed: () => Navigator.pop(context)),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+
+
+

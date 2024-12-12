@@ -2,36 +2,24 @@ import 'package:camera/camera.dart';
 import 'package:dynamic_camera/pages/scan_start_screen.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize camera list
+  final cameras = await availableCameras();
+
+  runApp(MyApp(cameras: cameras));
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class MyApp extends StatelessWidget {
+  final List<CameraDescription> cameras;
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  // This widget is the root of your application.
-
-  List<CameraDescription> _cameras = [];
-
-  Future<void> _initializeCameras() async {
-    _cameras = await availableCameras();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeCameras();
-  }
+  const MyApp({super.key, required this.cameras});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: ScanStartScreen(cameras: _cameras),
+      home: ScanStartScreen(cameras: cameras),
     );
   }
 }
