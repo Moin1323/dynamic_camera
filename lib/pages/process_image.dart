@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:dynamic_camera/widgets/alignment_gift.dart';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'dart:async';
@@ -98,33 +99,9 @@ class _ProcessImageState extends State<ProcessImage> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     final appWidth = MediaQuery.sizeOf(context).width;
     final appHeight = MediaQuery.sizeOf(context).height * 0.85;
-
-    String getImageForAlignment() {
-      debugPrint('x: $_x, y: $_y, z: $_z');
-
-      if (_y > 0.7 && _y.abs() > _x.abs()) {
-        debugPrint('Top Tilted');
-        return 'lib/assets/gif/down side.gif';
-      } else if (_y < -0.7 && _y.abs() > _x.abs()) {
-        debugPrint('Bottom Tilted');
-        return 'lib/assets/gif/up side.gif';
-      } else if (_x < -0.7 && _x.abs() > _y.abs()) {
-        debugPrint('Left Tilted');
-        return 'lib/assets/gif/right side.gif';
-      } else if (_x > 0.7 && _x.abs() > _y.abs()) {
-        debugPrint('Right Tilted');
-        return 'lib/assets/gif/left side.gif';
-      } else {
-        debugPrint('Default Alignment');
-        return 'lib/assets/coin.png';
-      }
-    }
-
-    final alignmentImage = getImageForAlignment();
 
     return Center(
       child: SizedBox(
@@ -143,18 +120,8 @@ class _ProcessImageState extends State<ProcessImage> {
               CaptureButtonWidget(
                   isAligned: _isAligned, onPressed: _takePicture),
               CloseButtonWidget(onPressed: () => Navigator.pop(context)),
-              // Image overlay based on alignment
-              Align(
-                alignment: Alignment.center,
-                child: SizedBox(
-                  height: appHeight * 0.4,
-                  width: appWidth * 0.4,
-                  child: Image.asset(
-                    alignmentImage,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
+              // Use the new alignment GIF widget
+              AlignmentGifWidget(x: _x, y: _y),
             ],
           ),
         ),
