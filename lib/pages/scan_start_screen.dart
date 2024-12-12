@@ -57,7 +57,6 @@ class ScanStartScreen extends StatelessWidget {
                           builder: (context) => ProcessImage(cameras: cameras),
                         ),
                       );
-
                     },
                   ),
                 ],

@@ -39,12 +39,14 @@ class _ProcessImageState extends State<ProcessImage> {
   }
 
   void _subscribeToAccelerometer() {
-    _sensorSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
+    _sensorSubscription =
+        accelerometerEvents.listen((AccelerometerEvent event) {
       setState(() {
         _x = event.x;
         _y = event.y;
         _z = event.z;
-        _isAligned = (_x.abs() < 0.7) && (_y.abs() < 0.7) && ((_z - 9.8).abs() < 0.7);
+        _isAligned =
+            (_x.abs() < 0.7) && (_y.abs() < 0.7) && ((_z - 9.8).abs() < 0.7);
       });
     });
   }
@@ -82,7 +84,8 @@ class _ProcessImageState extends State<ProcessImage> {
   }
 
   void _takePicture() async {
-    if (_cameraController.value.isTakingPicture || !_cameraController.value.isInitialized) return;
+    if (_cameraController.value.isTakingPicture ||
+        !_cameraController.value.isInitialized) return;
     XFile image = await _cameraController.takePicture();
     if (mounted) {
       showDialog(
@@ -95,9 +98,33 @@ class _ProcessImageState extends State<ProcessImage> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     final appWidth = MediaQuery.sizeOf(context).width;
     final appHeight = MediaQuery.sizeOf(context).height * 0.85;
+
+    String getImageForAlignment() {
+      debugPrint('x: $_x, y: $_y, z: $_z');
+
+      if (_y > 0.7 && _y.abs() > _x.abs()) {
+        debugPrint('Top Tilted');
+        return 'lib/assets/gif/down side.gif';
+      } else if (_y < -0.7 && _y.abs() > _x.abs()) {
+        debugPrint('Bottom Tilted');
+        return 'lib/assets/gif/up side.gif';
+      } else if (_x < -0.7 && _x.abs() > _y.abs()) {
+        debugPrint('Left Tilted');
+        return 'lib/assets/gif/right side.gif';
+      } else if (_x > 0.7 && _x.abs() > _y.abs()) {
+        debugPrint('Right Tilted');
+        return 'lib/assets/gif/left side.gif';
+      } else {
+        debugPrint('Default Alignment');
+        return 'lib/assets/coin.png';
+      }
+    }
+
+    final alignmentImage = getImageForAlignment();
 
     return Center(
       child: SizedBox(
@@ -107,12 +134,27 @@ class _ProcessImageState extends State<ProcessImage> {
           backgroundColor: Theme.of(context).colorScheme.surface,
           body: Stack(
             children: [
-              CameraPreviewWidget(cameraValue: _cameraValue, cameraController: _cameraController),
+              CameraPreviewWidget(
+                  cameraValue: _cameraValue,
+                  cameraController: _cameraController),
               const Positioned.fill(child: AlignImageOverlay()),
               AxisValuesWidget(x: _x, y: _y, z: _z),
               AlignmentStatusWidget(isAligned: _isAligned),
-              CaptureButtonWidget(isAligned: _isAligned, onPressed: _takePicture),
+              CaptureButtonWidget(
+                  isAligned: _isAligned, onPressed: _takePicture),
               CloseButtonWidget(onPressed: () => Navigator.pop(context)),
+              // Image overlay based on alignment
+              Align(
+                alignment: Alignment.center,
+                child: SizedBox(
+                  height: appHeight * 0.4,
+                  width: appWidth * 0.4,
+                  child: Image.asset(
+                    alignmentImage,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -120,7 +162,3 @@ class _ProcessImageState extends State<ProcessImage> {
     );
   }
 }
-
-
-
-
