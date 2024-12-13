@@ -47,7 +47,7 @@ class _ProcessImageState extends State<ProcessImage> {
         _y = event.y;
         _z = event.z;
         _isAligned =
-            (_x.abs() < 0.7) && (_y.abs() < 0.7) && ((_z - 9.8).abs() < 0.7);
+            (_x.abs() < 0.5) && (_y.abs() < 0.5) && ((_z - 9.8).abs() < 0.5);
       });
     });
   }
@@ -114,14 +114,20 @@ class _ProcessImageState extends State<ProcessImage> {
               CameraPreviewWidget(
                   cameraValue: _cameraValue,
                   cameraController: _cameraController),
-              const Positioned.fill(child: AlignImageOverlay()),
-              AxisValuesWidget(x: _x, y: _y, z: _z),
-              AlignmentStatusWidget(isAligned: _isAligned),
+              //AxisValuesWidget(x: _x, y: _y, z: _z),
+              // AlignmentStatusWidget(isAligned: _isAligned),
+              Align(
+                alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 60),
+                    child: Image.network(
+                        "https://fldai.s3.amazonaws.com/static/website/images/header_logo.png"),
+                  )),
+              // Use the new alignment GIF widget
+              AlignmentGifWidget(x: _x, y: _y),
               CaptureButtonWidget(
                   isAligned: _isAligned, onPressed: _takePicture),
               CloseButtonWidget(onPressed: () => Navigator.pop(context)),
-              // Use the new alignment GIF widget
-              AlignmentGifWidget(x: _x, y: _y),
             ],
           ),
         ),

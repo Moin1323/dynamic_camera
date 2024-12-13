@@ -11,14 +11,17 @@ class CaptureButtonWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.bottomCenter,
-      child: IconButton(
-        iconSize: 70,
-        icon: Icon(
-          Icons.camera,
-          color: isAligned ? Colors.white : Colors.grey,
+      child: isAligned ? Padding(
+        padding: const EdgeInsets.only(bottom: 40.0),
+        child: IconButton(
+          iconSize: 70,
+          icon: const Icon(
+            Icons.camera,
+            color: Colors.red,
+          ),
+          onPressed: isAligned ? onPressed : null,
         ),
-        onPressed: isAligned ? onPressed : null,
-      ),
+      ) : const SizedBox(),
     );
   }
 }
