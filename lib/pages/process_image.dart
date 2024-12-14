@@ -11,8 +11,8 @@ import '../widgets/axis_values.dart';
 import '../widgets/camera_preview.dart';
 import '../widgets/capture_button.dart';
 import '../widgets/cature_image_dailog.dart';
-import '../widgets/close_button.dart';
 import '../widgets/flash_light_dailog.dart';
+import '../widgets/header.dart';
 
 class ProcessImage extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -47,7 +47,7 @@ class _ProcessImageState extends State<ProcessImage> {
         _y = event.y;
         _z = event.z;
         _isAligned =
-            (_x.abs() < 0.5) && (_y.abs() < 0.5) && ((_z - 9.8).abs() < 0.5);
+            (_x.abs() < 0.3) && (_y.abs() < 0.3) && ((_z - 9.8).abs() < 0.3);
       });
     });
   }
@@ -99,6 +99,7 @@ class _ProcessImageState extends State<ProcessImage> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     final appWidth = MediaQuery.sizeOf(context).width;
     final appHeight = MediaQuery.sizeOf(context).height * 0.85;
@@ -112,22 +113,25 @@ class _ProcessImageState extends State<ProcessImage> {
           body: Stack(
             children: [
               CameraPreviewWidget(
-                  cameraValue: _cameraValue,
-                  cameraController: _cameraController),
-              //AxisValuesWidget(x: _x, y: _y, z: _z),
-              // AlignmentStatusWidget(isAligned: _isAligned),
-              Align(
-                alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 60),
-                    child: Image.network(
-                        "https://fldai.s3.amazonaws.com/static/website/images/header_logo.png"),
-                  )),
-              // Use the new alignment GIF widget
+                cameraValue: _cameraValue,
+                cameraController: _cameraController,
+              ),
+              HeaderWidget(
+                logoImagePath:
+                "https://fldai.s3.amazonaws.com/static/website/images/header_logo.png",
+                onClose: () => Navigator.pop(context),
+              ),
               AlignmentGifWidget(x: _x, y: _y),
+              AxisValuesWidget(
+                x: _x,
+                y: _y,
+                z: _z,
+                isAligned: _isAligned,
+              ),
               CaptureButtonWidget(
-                  isAligned: _isAligned, onPressed: _takePicture),
-              CloseButtonWidget(onPressed: () => Navigator.pop(context)),
+                isAligned: _isAligned,
+                onPressed: _takePicture,
+              ),
             ],
           ),
         ),

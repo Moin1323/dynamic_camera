@@ -6,13 +6,13 @@ class AlignmentGifWidget extends StatelessWidget {
   const AlignmentGifWidget({super.key, required this.x, required this.y});
 
   String _getImageForAlignment() {
-    if (y > 0.5 && y.abs() > x.abs()) {
+    if (y > 0.3 && y.abs() > x.abs()) {
       return 'lib/assets/gif/down side.gif';
-    } else if (y < -0.5 && y.abs() > x.abs()) {
+    } else if (y < -0.3 && y.abs() > x.abs()) {
       return 'lib/assets/gif/up side.gif';
-    } else if (x < -0.5 && x.abs() > y.abs()) {
+    } else if (x < -0.3 && x.abs() > y.abs()) {
       return 'lib/assets/gif/right side.gif';
-    } else if (x > 0.5 && x.abs() > y.abs()) {
+    } else if (x > 0.3 && x.abs() > y.abs()) {
       return 'lib/assets/gif/left side.gif';
     } else {
       return '';
@@ -20,18 +20,19 @@ class AlignmentGifWidget extends StatelessWidget {
   }
 
   String _getHelpTextForAlignment() {
-    if (y > 0.5 && y.abs() > x.abs()) {
-      return 'Move Upwards to Align';
-    } else if (y < -0.5 && y.abs() > x.abs()) {
-      return 'Move Downwards to Align';
-    } else if (x < -0.5 && x.abs() > y.abs()) {
-      return 'Move Leftwards to Align';
-    } else if (x > 0.5 && x.abs() > y.abs()) {
-      return 'Move Rightwards to Align';
+    if (y > 0.3 && y.abs() > x.abs()) {
+      return '⬆️ Up we go! Almost there!';
+    } else if (y < -0.3 && y.abs() > x.abs()) {
+      return '⬇️ Down a notch! Stay steady!';
+    } else if (x < -0.3 && x.abs() > y.abs()) {
+      return '⬅️ Glide left! Precision matters!';
+    } else if (x > 0.3 && x.abs() > y.abs()) {
+      return '➡️ Drift right! Keep it smooth!';
     } else {
-      return 'Perfectly Aligned, now fit the coin into the circle';
+      return '🎯 Bullseye! You’re perfectly aligned, now lock it in!';
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

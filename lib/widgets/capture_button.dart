@@ -19,7 +19,7 @@ class CaptureButtonWidget extends StatelessWidget {
             Icons.camera,
             color: Colors.red,
           ),
-          onPressed: isAligned ? onPressed : null,
+          onPressed: onPressed,
         ),
       ) : const SizedBox(),
     );
